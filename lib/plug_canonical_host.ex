@@ -75,7 +75,7 @@ defmodule PlugCanonicalHost do
     end
   end
 
-  @spec canonical_scheme(%Conn{}) :: String.t() | string
+  @spec canonical_scheme(%Conn{}) :: String.t() | String.t()
   defp canonical_scheme(conn = %Conn{scheme: scheme}) do
     case get_req_header(conn, @forwarded_proto_header) do
       [forwarded_proto] -> forwarded_proto
