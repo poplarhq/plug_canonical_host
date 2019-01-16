@@ -2,3 +2,4 @@ _build
 deps
 doc
 .plts
+.elixir_ls
