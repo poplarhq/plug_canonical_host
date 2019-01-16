@@ -35,7 +35,7 @@ defmodule PlugCanonicalHost do
   Initialize this plug with a canonical host option.
   """
   @spec init(opts) :: opts
-  def init(opts), do: Keyword.fetch!(opts, :canonical_host)
+  def init(opts), do: Keyword.get(opts, :canonical_host)
 
   @doc """
   Call the plug.
@@ -43,6 +43,22 @@ defmodule PlugCanonicalHost do
   @spec call(%Conn{}, opts) :: Conn.t()
   def call(conn = %Conn{host: host}, canonical_host)
       when is_nil(canonical_host) == false and canonical_host !== "" and host !== canonical_host do
+    redirect_conn(conn, canonical_host)
+  end
+
+  def call(conn = %Conn{}, nil) do
+    canonical_host = get_canonical_host_from_env()
+
+    if canonical_host && String.length(canonical_host) > 0 do
+      redirect_conn(conn, canonical_host)
+    else
+      conn
+    end
+  end
+
+  def call(conn, _), do: conn
+
+  defp redirect_conn(%Conn{} = conn, canonical_host) do
     location = conn |> redirect_location(canonical_host)
 
     conn
@@ -50,8 +66,6 @@ defmodule PlugCanonicalHost do
     |> send_resp(@status_code, String.replace(@html_template, "%s", location))
     |> halt
   end
-
-  def call(conn, _), do: conn
 
   @spec redirect_location(%Conn{}, String.t()) :: String.t()
   defp redirect_location(conn, canonical_host) do
@@ -81,5 +95,9 @@ defmodule PlugCanonicalHost do
       [forwarded_proto] -> forwarded_proto
       [] -> scheme
     end
+  end
+
+  defp get_canonical_host_from_env() do
+    Application.get_env(:plug_canonical_host, :canonical_host)
   end
 end

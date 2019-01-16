@@ -14,6 +14,18 @@ defmodule PlugCanonicalHostTest do
     end
   end
 
+  defmodule TestAppWithoutCompiledConfig do
+    use Plug.Router
+
+    plug(PlugCanonicalHost)
+    plug(:match)
+    plug(:dispatch)
+
+    get "/foo" do
+      conn |> send_resp(200, "Hello World")
+    end
+  end
+
   test "redirects to canonical host" do
     conn =
       :get
@@ -70,6 +82,29 @@ defmodule PlugCanonicalHostTest do
     conn =
       %Plug.Conn{host: "www.example.com", status: 200}
       |> PlugCanonicalHost.call(nil)
+
+    assert conn.status == 200
+  end
+
+  test "does redirect when a host is provided in Application env" do
+    Application.put_env(:plug_canonical_host, :canonical_host, "example.com")
+
+    conn =
+      :get
+      |> conn("http://www.example.com/foo?bar=1")
+      |> TestAppWithoutCompiledConfig.call(TestAppWithoutCompiledConfig.init([]))
+
+    assert conn.status == 301
+    assert get_resp_header(conn, "location") === ["http://example.com/foo?bar=1"]
+  end
+
+  test "doesn't redirect when a nil host is provided in Application env" do
+    Application.put_env(:plug_canonical_host, :canonical_host, nil)
+
+    conn =
+      :get
+      |> conn("http://www.example.com/foo?bar=1")
+      |> TestAppWithoutCompiledConfig.call(TestAppWithoutCompiledConfig.init([]))
 
     assert conn.status == 200
   end

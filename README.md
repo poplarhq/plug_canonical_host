@@ -31,13 +31,29 @@ Usage
 before all of the other plugs you want to happen after successful redirection
 to your canonical host.
 
+You can define the domain name in the plug macro, in which case it'll be defined at compile time.
+
 ```elixir
 defmodule Endpoint do
   plug PlugCanonicalHost, canonical_host: "www.example.com"
 end
 ```
 
-For example, if your application is accessible via both `example.com` and
+Or you can define the domain name using the application environment in your environment's config file.
+
+```elixir
+defmodule Endpoint do
+  plug PlugCanonicalHost
+end
+```
+
+```elixir
+config :plug_canonical_host, canonical_host: "www.example.com"
+````
+
+(The definition in the plug macro will take precedence.)
+
+Now, if your application is accessible via both `example.com` and
 `www.example.com`, all traffic coming through `example.com` will be redirected
 (with a `301` HTTP status) to the matching `wwww.example.com` URL.
 
